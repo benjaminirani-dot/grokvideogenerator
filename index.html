@@ -1,1 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI Video Creator by Ben</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .glass { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); }
+    .mono { font-family: 'Courier New', monospace; }
+  </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 text-white">
 
+  <!-- Header -->
+  <header class="p-6 text-center">
+    <h1 class="text-3xl font-bold">AI Video Creator</h1>
+    <p class="text-sm opacity-80">by <strong>Ben</strong> — Powered by Grok AI (Simulated)</p>
+  </header>
+
+  <main class="max-w-4xl mx-auto p-6 grid gap-6 md:grid-cols-2">
+
+    <!-- Controls -->
+    <div class="space-y-4">
+      <div class="glass p-5 rounded-xl">
+        <label class="block text-sm mb-1">Topic</label>
+        <input id="topic" class="w-full p-3 rounded bg-white/10 border border-white/20" placeholder="e.g. EuroShop Smart Bag Launch" />
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div class="glass p-4 rounded-xl">
+          <label class="text-xs">Duration</label>
+          <input id="duration" type="number" value="30" min="10" max="120" class="w-full bg-transparent" />
+        </div>
+        <div class="glass p-4 rounded-xl">
+          <label class="text-xs">Style</label>
+          <select id="style" class="w-full bg-white/10 p-2 rounded border border-white/20">
+            <option>Professional</option>
+            <option>Energetic</option>
+            <option>Funny</option>
+            <option>Casual</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div class="glass p-4 rounded-xl">
+          <label class="text-xs">Voice</label>
+          <select id="voice" class="w-full bg-white/10 p-2 rounded border border-white/20">
+            <option>Male</option>
+            <option>Female</option>
+          </select>
+        </div>
+        <div class="glass p-4 rounded-xl">
+          <label class="text-xs">Music</label>
+          <select id="music" class="w-full bg-white/10 p-2 rounded border border-white/20">
+            <option value="">None</option>
+            <option value="upbeat">Upbeat</option>
+            <option value="calm">Calm</option>
+          </select>
+        </div>
+      </div>
+
+      <button id="generateBtn" class="w-full py-3 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl font-bold hover:from-purple-700 hover:to-indigo-700 transition">
+        Generate Video
+      </button>
+
+      <div id="progress" class="hidden text-sm text-center mt-2">
+        <span class="animate-pulse">Generating... Please wait</span>
+      </div>
+    </div>
+
+    <!-- Preview -->
+    <div class="space-y-4">
+      <div class="glass p-5 rounded-xl">
+        <h3 class="text-lg font-bold mb-3">Preview</h3>
+        <div id="videoContainer" class="bg-black rounded-lg aspect-video flex items-center justify-center overflow-hidden">
+          <p class="text-gray-400">Video will appear here</p>
+        </div>
+        <button id="downloadBtn" class="mt-3 w-full py-2 bg-green-600 rounded hidden">Download MP4</button>
+      </div>
+
+      <!-- About Me -->
+      <div class="glass p-5 rounded-xl text-sm">
+        <h3 class="font-bold text-purple-300 mb-2">About Me</h3>
+        <p class="leading-relaxed">
+          Hello, I’m <strong>Ben</strong> — a motivated and detail-oriented individual with a passion for learning, creativity, and problem-solving. I enjoy exploring innovative ideas, developing new skills, and taking on projects that challenge me to think critically. My goal is to keep growing both personally and professionally while contributing to meaningful work that makes a positive impact.
+        </p>
+        <p class="mt-3 italic text-xs opacity-75">This tool was built by me using AI and web tech.</p>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // Elements
+    const topic = document.getElementById('topic');
+    const duration = document.getElementById('duration');
+    const style = document.getElementById('style');
+    const voiceSelect = document.getElementById('voice');
+    const music = document.getElementById('music');
+    const generateBtn = document.getElementById('generateBtn');
+    const progress = document.getElementById('progress');
+    const videoContainer = document.getElementById('videoContainer');
+    const downloadBtn = document.getElementById('downloadBtn');
+
+    // Simulated Grok Script
+    const grokScripts = {
+      "EuroShop Smart Bag Launch": `Introducing the future of shopping!
+The EuroShop Smart Bag scans items as you shop.
+No checkout lines — just walk out!
+Pay securely with your phone.
+Eco-friendly, durable, and stylish.
+Available now in 3 colors.
+Shop smarter. Live easier.`,
+      "default": `Welcome to the future.
+This is an AI-generated video.
+It uses your browser to create real videos.
+No server needed.
+Just type and click generate.
+Watch the magic happen.
+Download and share your creation!`
+    };
+
+    generateBtn.onclick = async () => {
+      const userTopic = topic.value.trim() || "AI Video Tool";
+      progress.classList.remove('hidden');
+      generateBtn.disabled = true;
+      videoContainer.innerHTML = '<p class="text-gray-400">Working...</p>';
+
+      // 1. Get Script
+      const script = grokScripts[userTopic] || grokScripts.default;
+      await wait(1500);
+
+      // 2. Generate SRT
+      const lines = script.split('\n').filter(l => l.trim());
+      const perLine = Math.max(2, Math.floor(duration.value / lines.length));
+      let srt = '';
+      lines.forEach((line, i) => {
+        const start = i * perLine;
+        const end = Math.min(start + perLine, duration.value);
+        srt += `${i+1}\n${fmt(start)} --> ${fmt(end)}\n${line}\n\n`;
+      });
+
+      // 3. TTS Audio
+      const audioBlob = await textToSpeech(script, voiceSelect.value);
+      const audioUrl = URL.createObjectURL(audioBlob);
+
+      // 4. Background Video
+      const bgUrl = 'https://videos.pexels.com/video-files/855564/855564-hd_1280_720_30fps.mp4';
+      const bgBlob = await fetchVideo(bgUrl, duration.value);
+      const bgVideoUrl = URL.createObjectURL(bgBlob);
+
+      // 5. Music (optional)
+      let finalAudioUrl = audioUrl;
+      if (music.value) {
+        const musicUrl = music.value === 'upbeat' 
+          ? 'https://cdn.pixabay.com/download/audio/2022/03/15/audio_8c28e.pdf?filename=upbeat-background-10552.mp3'
+          : 'https://cdn.pixabay.com/download/audio/2022/03/15/audio_8c28e.pdf?filename=calm-and-peaceful-10551.mp3';
+        const musicBlob = await fetch(musicUrl).then(r => r.blob());
+        finalAudioUrl = await mixAudio(audioUrl, URL.createObjectURL(musicBlob), duration.value);
+      }
+
+      // 6. Combine + Burn Subs
+      const finalVideoBlob = await combineVideo(bgVideoUrl, finalAudioUrl, srt, duration.value);
+      const finalUrl = URL.createObjectURL(finalVideoBlob);
+
+      // 7. Show Result
+      videoContainer.innerHTML = `<video controls class="w-full h-full rounded" src="${finalUrl}"></video>`;
+      downloadBtn.onclick = () => download(finalUrl, 'ai-video-by-ben.mp4');
+      downloadBtn.classList.remove('hidden');
+
+      progress.classList.add('hidden');
+      generateBtn.disabled = false;
+    };
+
+    function fmt(sec) {
+      const h = Math.floor(sec/3600).toString().padStart(2,'0');
+      const m = Math.floor((sec%3600)/60).toString().padStart(2,'0');
+      const s = (sec%60).toString().padStart(2,'0');
+      return `${h}:${m}:${s},000`;
+    }
+
+    function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+    function textToSpeech(text, gender) {
+      return new Promise(resolve => {
+        const utterance = new SpeechSynthesisUtterance(text);
+        const voices = speechSynthesis.getVoices();
+        const voice = voices.find(v => v.name.includes(gender) && v.lang.startsWith('en')) || voices[0];
+        utterance.voice = voice;
+        utterance.rate = 0.9;
+        utterance.onend = () => {
+          const recorder = new MediaRecorder(window.mediaStream);
+          const chunks = [];
+          recorder.ondataavailable = e => chunks.push(e.data);
+          recorder.onstop = () => resolve(new Blob(chunks, { type: 'audio/wav' }));
+          recorder.start();
+          setTimeout(() => recorder.stop(), 100);
+        };
+        // Start recording audio from speech
+        navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+          window.mediaStream = stream;
+          speechSynthesis.speak(utterance);
+        });
+      });
+    }
+
+    async function fetchVideo(url, duration) {
+      const resp = await fetch(url);
+      const blob = await resp.blob();
+      return new Promise(resolve => {
+        const video = document.createElement('video');
+        video.src = URL.createObjectURL(blob);
+        video.onloadedmetadata = () => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          canvas.width = 1280; canvas.height = 720;
+          const output = new MediaStream();
+          const recorder = new MediaRecorder(output, { mimeType: 'video/webm' });
+          const chunks = [];
+          let time = 0;
+          recorder.ondataavailable = e => chunks.push(e.data);
+          recorder.onstop = () => resolve(new Blob(chunks, { type: 'video/mp4' }));
+
+          const draw = () => {
+            if (time >= duration * 1000) {
+              recorder.stop();
+              return;
+            }
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            output.getTracks().forEach(t => t.enabled = false);
+            output.getTracks().forEach(t => t.enabled = true);
+            time += 33;
+            requestAnimationFrame(draw);
+          };
+          recorder.start();
+          video.currentTime = 0;
+          video.play();
+          draw();
+        };
+      });
+    }
+
+    async function mixAudio(vocalsUrl, musicUrl, duration) {
+      // Simplified: just return vocals (real mixing needs Web Audio API)
+      return vocalsUrl;
+    }
+
+    async function combineVideo(videoUrl, audioUrl, srt, duration) {
+      // Use Whammy.js or similar in real app
+      // For demo: return a short generated video
+      const canvas = document.createElement('canvas');
+      canvas.width = 1280; canvas.height = 720;
+      const ctx = canvas.getContext('2d');
+      const stream = canvas.captureStream(30);
+      const recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+      const chunks = [];
+
+      recorder.ondataavailable = e => chunks.push(e.data);
+      recorder.onstop = () => {
+        const blob = new Blob(chunks, { type: 'video/mp4' });
+        downloadBtn.onclick = () => download(URL.createObjectURL(blob), 'video.mp4');
+      };
+
+      let time = 0;
+      const lines = srt.split('\n\n');
+      recorder.start();
+
+      const drawFrame = () => {
+        ctx.fillStyle = '#1a1a2e';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#fff';
+        ctx.font = '40px Arial';
+        ctx.textAlign = 'center';
+        const line = lines[Math.floor(time / 5) % lines.length] || '';
+        const text = line.split('\n').slice(2).join(' ') || 'AI Video by Ben';
+        ctx.fillText(text, canvas.width/2, canvas.height/2);
+
+        time += 0.1;
+        if (time < duration) {
+          requestAnimationFrame(drawFrame);
+        } else {
+          recorder.stop();
+        }
+      };
+      drawFrame();
+
+      return new Promise(resolve => {
+        recorder.onstop = () => resolve(new Blob(chunks, { type: 'video/mp4' }));
+      });
+    }
+
+    function download(url, name) {
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = name;
+      a.click();
+    }
+  </script>
+</body>
+</html>
